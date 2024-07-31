@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
@@ -18,7 +17,7 @@ func main() {
 	args := os.Args
 	fmt.Println(args[0], args[1], args[2], args[3])
 	totalArgs := len(os.Args[1:])
-	if totalArgs < 3 { 
+	if totalArgs < 3 {
 		fmt.Println("Wrong number of parameters: ", totalArgs)
 		return
 	}
@@ -27,12 +26,14 @@ func main() {
 
 	db1, err := strconv.Atoi(args[2])
 	if err != nil {
-		log.Fatal("Missing source DB parameter:", err)
+		fmt.Println("Error parsing source DB parameter: ", err)
+		return
 	}
 
 	db2, err := strconv.Atoi(args[3])
 	if err != nil {
-		log.Fatal("Missing target DB parameter:", err)
+		fmt.Println("Error parsing target DB parameter:", err)
+		return
 	}
 
 	// Connect to Redis = Client 1
@@ -56,7 +57,8 @@ func main() {
 	pong1, err := client1.Ping(ctx).Result()
 
 	if err != nil {
-		log.Fatal("Error connecting to Redis Client 1:", err)
+		fmt.Println("Error connecting to Redis Client 1:", err)
+		return
 	}
 
 	fmt.Println("Connected to Redis Client 1:", pong1)
@@ -65,16 +67,17 @@ func main() {
 	pong2, err := client2.Ping(ctx).Result()
 
 	if err != nil {
-		log.Fatal("Error connecting to Redis Client 2:", err)
+		fmt.Println("Error connecting to Redis Client 2:", err)
+		return
 	}
 
 	fmt.Println("Connected to Redis Client 2:", pong2)
 
-	//create and initialize the map of key/values
+	// create and initialize the map of key/values
 	my_map := map[string]string{"myval1": "foo", "myval2": "bar", "yourval1": "baz", "yourval2": "fuz"}
 	fmt.Println("MY MAP:", my_map)
 
-	//set all keys into the DB 1
+	// set all keys into the DB 1
 
 	for k, v := range my_map {
 		err = client1.Set(ctx, k, v, 0).Err()
@@ -84,14 +87,14 @@ func main() {
 		}
 	}
 
-	//scan DB 1 for the keys as it's the most efficient and recommended way
+	// scan DB 1 for the keys as it's the most efficient and recommended way
 	iter := client1.Scan(ctx, 0, pattern, 0).Iterator()
 
 	for iter.Next(ctx) {
 		cur_key := iter.Val()
 		fmt.Println("keys", cur_key)
 
-		//get value by the key
+		// get value by the key
 		cur_val, err := client1.Get(ctx, cur_key).Result()
 		if err != nil {
 			fmt.Println("Error getting key values: ", err)
