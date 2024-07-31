@@ -17,8 +17,11 @@ func main() {
 	// Parse arguments and convert to Int
 	args := os.Args
 	fmt.Println(args[0], args[1], args[2], args[3])
-	total_args := len(os.Args[1:])
-	fmt.Println("Total Args =", total_args)
+	totalArgs := len(os.Args[1:])
+	if totalArgs < 3 { 
+		fmt.Println("Wrong number of parameters: ", totalArgs)
+		return
+	}
 
 	pattern := args[1]
 
@@ -76,7 +79,8 @@ func main() {
 	for k, v := range my_map {
 		err = client1.Set(ctx, k, v, 0).Err()
 		if err != nil {
-			panic(err)
+			fmt.Println("Error seeding key/value pairs in the first DB: ", err)
+			return
 		}
 	}
 
@@ -90,19 +94,22 @@ func main() {
 		//get value by the key
 		cur_val, err := client1.Get(ctx, cur_key).Result()
 		if err != nil {
-			panic(err)
+			fmt.Println("Error getting key values: ", err)
+			return
 		}
 		fmt.Println(cur_key, cur_val)
 
 		// copy key/value pairs to the second DB
 		err = client2.Set(ctx, cur_key, cur_val, 0).Err()
 		if err != nil {
-			panic(err)
+			fmt.Println("Error copying keys into the new DB: ", err)
+			return
 		}
 	}
 
 	if err := iter.Err(); err != nil {
-		panic(err)
+		fmt.Println("Error: ", err)
+		return
 	}
 
 	fmt.Printf("Successfully copied pattern '%s' keys with values from DB %s to the DB %s \n", args[1], args[2], args[3])
